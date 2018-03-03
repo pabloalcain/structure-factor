@@ -6,8 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void rdf(double *x, int *type, int natoms, int nbins, double size, int *pairs,
-           int npairs, char pbc, double *gr);
+  void rdf(double *x, int natoms, int nbins, double size, char pbc, double *gr);
 #ifdef __cplusplus
 }
 #endif

@@ -10,7 +10,7 @@ _DIRNAME = os.path.dirname(__file__)
 librdf = ct.CDLL(os.path.join(_DIRNAME, 'librdf.so'))
 rdf_c = librdf.rdf
 
-def rdf(x, t, box, pairs, nbins, pbc=True):
+def rdf(x, box, nbins, pbc=True):
   """Calculate RDF.
 
   Parameters
@@ -19,22 +19,8 @@ def rdf(x, t, box, pairs, nbins, pbc=True):
   x : numpy float64 array
       Positions of the particles in the system
 
-  t : numpy int32 array
-      Types of the particles
-
   box : numpy float64 array
       Box
-
-  pairs: iterable
-      List of pairs to consider. Each element of the list is a tuple
-      of size 2, with the first element being the types considered
-      and the second one the other types. For example, if we want to
-      calculate the RDF on a system with 2 types of particles of all
-      types vs all types and type 1 vs type 2, the pairs should be:
-
-      pairs = [((1, 2), (1, 2)), ((1,), (2,))]
-
-      A keyword for "all types" is type 0
 
   nbins : int
       Number of bins to consider
@@ -58,26 +44,14 @@ def rdf(x, t, box, pairs, nbins, pbc=True):
   else:
     size = size_x
 
-  #TODO: Add some warning in case the indices repeat
   natoms = np.shape(x)[0]
-  npairs = len(pairs)
-  ncol = npairs + 1
-  pair_ar = np.zeros(2*npairs, dtype=np.int32)
-  i = 0
-  for p in pairs:
-    pair_ar[i] = p[0][0]
-    pair_ar[i+1] = p[1][0]
-    i += 2
-  tmp = (ct.c_double * (nbins * ncol))()
+  tmp = (ct.c_double * (nbins * 2))()
   x_p = x.ctypes.data_as(ct.c_void_p)
-  t_p = t.ctypes.data_as(ct.c_void_p)
-  pair_p = pair_ar.ctypes.data_as(ct.c_void_p)
-  rdf_c.argtypes = [ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_int,
-                    ct.c_double, ct.c_void_p, ct.c_int, ct.c_bool,
-                    ct.c_void_p]
-  rdf_c(x_p, t_p, natoms, nbins, size, pair_p, npairs, pbc, tmp)
-  value = np.frombuffer(tmp, dtype=np.double, count=nbins * ncol)
-  return value.reshape((nbins, ncol))
+  rdf_c.argtypes = [ct.c_void_p, ct.c_int, ct.c_int, ct.c_double,
+                    ct.c_bool, ct.c_void_p]
+  rdf_c(x_p, natoms, nbins, size, pbc, tmp)
+  value = np.frombuffer(tmp, dtype=np.double, count=nbins * 2)
+  return value.reshape((nbins, 2))
 
 
 def ssf(gr, density, pbc=True):
