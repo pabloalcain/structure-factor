@@ -10,7 +10,7 @@ _DIRNAME = os.path.dirname(__file__)
 librdf = ct.CDLL(os.path.join(_DIRNAME, 'librdf.so'))
 rdf_c = librdf.rdf
 
-def rdf(x, box, nbins, pbc=True):
+def rdf(x, size, nbins, pbc=True):
   """Calculate RDF.
 
   Parameters
@@ -19,8 +19,8 @@ def rdf(x, box, nbins, pbc=True):
   x : numpy float64 array
       Positions of the particles in the system
 
-  box : numpy float64 array
-      Box
+  size : float
+      Size of the cubic box
 
   nbins : int
       Number of bins to consider
@@ -36,14 +36,6 @@ def rdf(x, box, nbins, pbc=True):
       An array with the information of the compute. The first column
       is 'r' and the rest are the RDF calculated for the pair list.
   """
-  size_x = box[0][1] - box[0][0]
-  size_y = box[1][1] - box[1][0]
-  size_z = box[2][1] - box[2][0]
-  if size_x != size_y or size_y != size_z:
-    raise ValueError("The box should be cubic for this to work")
-  else:
-    size = size_x
-
   natoms = np.shape(x)[0]
   tmp = (ct.c_double * (nbins * 2))()
   x_p = x.ctypes.data_as(ct.c_void_p)

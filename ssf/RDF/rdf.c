@@ -33,6 +33,7 @@ void rdf(double *x, int natoms, int nbins, double size, char pbc, double *gr) {
       }
       r = sqrt(r);
       idx = (int)(r*nbins/rmax);
+      if (idx >= nbins) continue;
       hist += 1;
       gr[2*idx + 1] += 1.0;
     }
