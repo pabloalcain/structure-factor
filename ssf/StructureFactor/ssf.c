@@ -12,7 +12,7 @@ void ssf(double *x, int natoms, double size, int npoints, int naver, int nrep,
      column 0: k
      column k: s(k) in the pair labeled by k
   */
-  int hist = 0;
+  int hist = nrep * nrep * nrep * natoms;
   
   for (int i = 0; i < 2 * npoints; i++)
     sk[i] = 0;
@@ -49,7 +49,6 @@ void ssf(double *x, int natoms, double size, int npoints, int naver, int nrep,
         double cell_real = 0.0, cell_imag = 0.0;
 
         for (int i = 0; i < natoms; i++) {
-          hist += nrep * nrep * nrep;
           double accum;
           accum = q1[0] * x[3*i + 0];
           accum += q1[1] * x[3*i + 1];

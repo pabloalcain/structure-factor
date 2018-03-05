@@ -10,7 +10,7 @@ _DIRNAME = os.path.dirname(__file__)
 libssf = ct.CDLL(os.path.join(_DIRNAME, 'libssf.so'))
 ssf_c = libssf.ssf
 
-def structureFactor(x, box, k, rep=2, lebedev=194):
+def structureFactor(x, size, k, rep=2, lebedev=194):
   """
   Calculate structure factor.
 
@@ -20,8 +20,8 @@ def structureFactor(x, box, k, rep=2, lebedev=194):
   x : numpy float64 array
       Positions of the particles in the system
 
-  box : numpy float64 array
-      Box
+  size : float
+      Size of the cubic box
 
   k : numpy array
       Wavenumbers to calculate
@@ -43,13 +43,6 @@ def structureFactor(x, box, k, rep=2, lebedev=194):
       pair list.
   """
 
-  size_x = box[0][1] - box[0][0]
-  size_y = box[1][1] - box[1][0]
-  size_z = box[2][1] - box[2][0]
-  if size_x != size_y or size_y != size_z:
-    raise ValueError("The box should be cubic for this to work")
-  else:
-    size = size_x
   natoms = np.shape(x)[0]
   npoints = len(k)
   tmp = (ct.c_double * (npoints * 2))()
