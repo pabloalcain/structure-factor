@@ -4,4 +4,4 @@ independent of any data structure
 """
 
 from ssf.RDF.RDF import rdf
-from ssf.StructureFactor.StructureFactor import structureFactor
+from ssf.StructureFactor.StructureFactor import structureFactor, structureFactorPowder

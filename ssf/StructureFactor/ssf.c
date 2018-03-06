@@ -93,3 +93,62 @@ void ssf(double *x, int natoms, double size, int npoints, int naver, int nrep,
   free(qw);
   return;
 }
+
+
+void ssf_powder(double *x, int natoms, double size, int npoints, double *k, double *sk){
+  /* Calculates ssf with in 3D for a cubic box and returns on ssf. x is
+     an array that has the info in XYZ XYZ XYZ...fashion. The rdf is
+     calculated for the whole box up to sqrt(3)/2.
+
+
+     on sk, returns a 2D array with this format:
+
+     column 0: k
+     column k: s(k) in the pair labeled by k
+  */
+  int hist = natoms;
+  
+  for (int i = 0; i < 2 * npoints; i++)
+    sk[i] = 0;
+
+#ifdef _OPENMP 
+#pragma omp parallel
+#endif
+  {
+    int tid = 0;
+    int nthreads = 1;
+#ifdef _OPENMP
+    tid = omp_get_thread_num();
+    nthreads = omp_get_num_threads();
+#endif
+    for (int it = 0; it < npoints; it += nthreads) {
+      int ii = it + tid;
+      if (ii >= npoints) break;
+      double ki = k[ii];
+      sk[2 * ii] = ki;
+      double accum = 0;
+      if (ki != 0) {
+        for (int i = 0; i < natoms; i++) {
+          double x1[3];
+          for (int k = 0; k < 3; k++) x1[k] = x[3*i + k];
+          for (int j = i + 1; j < natoms; j++) {
+            double r = 0.0;
+            for (int k = 0; k < 3; k++)
+              r += (x1[k] - x[3*j + k]) * (x1[k] - x[3*j + k]);
+            r = sqrt(r);
+            accum += 2*sin(ki*r)/(ki*r);
+          }
+        }
+      } else {
+        accum = (natoms * (natoms - 1)) / 2;
+      }
+      sk[2 * ii + 1] = accum;
+    }
+  }
+
+  for (int i = 0; i < npoints; i++) {
+    sk[2 * i + 1] /= hist;
+    sk[2 * i + 1] += 1;
+  }
+  return;
+}

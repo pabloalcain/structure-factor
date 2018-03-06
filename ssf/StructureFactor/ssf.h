@@ -16,6 +16,7 @@ extern "C" {
 #endif
   void ssf(double *x, int natoms, double size, int npoints, int naver, int nrep,
            double *k, double *gr);
+  void ssf_powder(double *x, int natoms, double size, int npoints, double *k, double *sk);
 #ifdef __cplusplus
 }
 #endif
