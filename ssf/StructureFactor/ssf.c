@@ -140,7 +140,7 @@ void ssf_powder(double *x, int natoms, double size, int npoints, double *k, doub
           }
         }
       } else {
-        accum = (natoms * (natoms - 1)) / 2;
+        accum = natoms * (natoms - 1);
       }
       sk[2 * ii + 1] = accum;
     }
