@@ -55,7 +55,7 @@ void ssf(double *x, int natoms, double size, int npoints, int naver, int nrep,
           accum += q1[2] * x[3*i + 2];
           double this_real, this_imag;
           this_real = cos(accum);
-          this_imag = sin(accum);
+          this_imag = sqrt(1 - this_real * this_real);
           cell_real += this_real;
           cell_imag += this_imag;
         }
