@@ -23,84 +23,73 @@ def generate_sc(size, n):
     i += 1
   return x
 
-def myssf(x, size, q, pbc=False):
-  """
-  From a series of positions x in a cubic box of length size we get
-  the structure factor for momentum q
-  """
-
-  natoms = np.shape(x)[0]
-  sf = 0.0
-  for i in range(natoms):
-    x1 = x[i]
-    for j in range(i+1, natoms):
-      x2 = x[j]
-      dx = x2 - x1
-      if pbc:
-        for i in range(3):
-          if dx[i] >  size/2: dx[i] -= size
-          if dx[i] < -size/2: dx[i] += size
-      r = np.linalg.norm(dx)
-      sf += 2*np.sin(q*r)/(q*r)
-      sf /= natoms
-  sf += 1
-  sf[q==0] = natoms
-  return sf
-
-size = 1.0
-x = generate_sc(size, 10)
-natoms = np.shape(x)[0]
-
-"""r = rdf(x, size, 1000, pbc=False)
-s = ssf(r, natoms/size**3, pbc=False)
-r = rdf(x, size, 1000, pbc=True)
-s2 = ssf(r, natoms/size**3, pbc=True)
-k = s[:, 0]
-k = k[k < 20.0]
-fig, ax = pl.subplots()
-ax.plot(s2[:, 0], s2[:, 1], label='PBC')
-ax.plot(s[:, 0], s[:, 1], label='No PBC')
-"""
-k = np.linspace(0, 20.0, 100)
-print "Exact - C"
-b = time.time()
-exact = structureFactorPowder(x, size, k)
-t_pow = time.time() - b
-print "Elapsed in ssf powder: {0}s".format(t_pow)
-
-#print "Exact"
-#exact = myssf(x, size, k)
-#fig, ax = pl.subplots()
-#ax.plot(k, exact, label='Exact')
-#ax.plot(k, exact_c[:, 1], label='Exact in C')
-#pl.show()
-
+#pl.matplotlib.interactive(True)
 ldorder = [6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302,
            350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702,
            3074, 3890, 4334, 4802, 5294, 5810]
-fig, ax = pl.subplots()
-
-
-d = []
-t_leb = []
-leb = [6, 50, 194, 590, 3890, 5810]
-for l in ldorder:
-  print "Calculating {0}".format(l)
+#ldorder = [5810]
+lpart = range(2, 10)
+time_powder = []
+slope_leb = []
+for i in lpart:
+  size = float(i)
+  k = np.linspace(0, 20.0, 100)
+  x = generate_sc(1.0, i)
+  natoms = np.shape(x)[0]
   b = time.time()
-  s3 = structureFactor(x, size, k, rep=1, lebedev=l)
-  td = time.time() - b
-  print "Elapsed in ssf leb({0}): {1}s".format(l, td)
-  t_leb.append(td)
-  d.append(np.mean(abs(exact[:, 1]-s3[:, 1])))
-  if l in leb:
-    ax.plot(k, s3[:, 1], label='Leb - {0}'.format(l))
-ax.plot(k, exact[:, 1], label='Exact')
-ax.legend()
+  exact = structureFactorPowder(x, size, k)
+  t_pow = time.time() - b
+  print "Elapsed in ssf powder: {0}s".format(t_pow)
+  time_powder.append(t_pow)
+  fig, ax = pl.subplots()
 
-fig, ax2 = pl.subplots()
-ax2.plot(ldorder, d, '-o')
-ax2.set_xscale("log")
-ax2.set_yscale("log")
 
-fig, ax3 = pl.subplots()
-ax3.plot(ldorder, t_leb, '-o')
+  mean = []
+  maximum = []
+  t_leb = []
+  leb = [6, 50, 194, 590, 3890, 5810]
+  for l in ldorder:
+    b = time.time()
+    s3 = structureFactor(x, size, k, rep=1, lebedev=l)
+    td = time.time() - b
+    print "Elapsed in ssf leb({0}): {1}s".format(l, td)
+    t_leb.append(td)
+    mean.append(np.mean(abs(exact[:, 1]-s3[:, 1])))
+    maximum.append(np.max(abs(exact[:, 1]-s3[:, 1])))
+    if l in leb:
+      ax.plot(k, s3[:, 1], label='Leb - {0}'.format(l))
+  ax.plot(k, exact[:, 1], label='Exact')
+  ax.set_ylabel('S(q)')
+  ax.set_xlabel('q')
+  ax.legend()
+  ax.set_title('Sq para {0}'.format(i))
+  fig.tight_layout()
+  fig.savefig('{0}_sq.png'.format(i))
+  pl.close()
+  
+  fig, ax2 = pl.subplots()
+  ax2.plot(ldorder, mean, '-o', label='Mean')
+  ax2.plot(ldorder, maximum, '-o', label='Max')
+  ax2.set_xscale("log")
+  ax2.set_yscale("log")
+  ax2.set_ylabel('Error absoluto')
+  ax2.set_xlabel('Numero de puntos')
+  ax2.legend()
+  ax2.set_title('Error para {0}'.format(i))
+  fig.tight_layout()
+  fig.savefig('{0}_err.png'.format(i))
+  pl.close()
+  
+  fig, ax3 = pl.subplots()
+  ax3.plot(ldorder, t_leb, '-o')
+  ax3.set_ylabel('Tiempo')
+  ax3.set_xlabel('Numero de puntos')
+  pol = np.polyfit(ldorder, t_leb, 1)
+  ax3.plot(ldorder, np.polyval(pol, ldorder))
+  ax.set_title('Tiempo para {0} ({1})'.format(i, pol[0]))
+  fig.tight_layout()
+  fig.savefig('{0}_time.png'.format(i))
+  pl.close()
+
+  slope_leb.append(pol[0])
+
